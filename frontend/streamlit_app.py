@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # -------------------- CONFIG --------------------
-API_BASE_URL = "YOUR_PUBLIC_BACKEND_URL"  # Replace with your deployed FastAPI URL
+API_BASE_URL = "https://ai-quiz-generator-project-2.onrender.com"  # Updated backend URL
 
 st.set_page_config(page_title="AI Wiki Quiz Generator", layout="wide")
 st.title("🧠 AI Wiki Quiz Generator")
@@ -99,7 +99,7 @@ with tab2:
                         options = q.get("options", [])
                         for i, opt in enumerate(options, start=1):
                             st.markdown(f"- {i}. {opt}")
-                        st.markdown(f"**Answer:** {q.get('answer','')}")
+                        st.markdown(f"**Answer:** {q.get('answer','')}") 
                         st.markdown(f"**Explanation:** {q.get('explanation','')}")
                         st.markdown(f"**Difficulty:** {q.get('difficulty','')}")
                         st.write("---")
