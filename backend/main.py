@@ -1,27 +1,31 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import os
 
 from scraper import extract_text_from_wiki
 from llm_quiz_generator import generate_quiz_from_text
 
-app = FastAPI()
+app = FastAPI(title="AI Quiz Generator")
 
+# -------------------- CORS --------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # You can replace "*" with your frontend URL if you want
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# -------------------- Models --------------------
 class QuizRequest(BaseModel):
     url: str
 
 # -------------------- In-Memory History --------------------
-quiz_history = []  # stores previously generated quizzes
-quiz_id_counter = 1  # incremental ID for each quiz
+quiz_history = []
+quiz_id_counter = 1
 
+# -------------------- Endpoints --------------------
 @app.get("/")
 def home():
     return {"status": "✅ Backend is running"}
@@ -40,12 +44,10 @@ def generate(req: QuizRequest):
     if not text:
         raise HTTPException(400, "Could not extract text from article.")
 
-    # Generate quiz using your existing LLM generator
     quiz_data = generate_quiz_from_text(title, text)
     quiz_data.update(extras)
     quiz_data["url"] = req.url
 
-    # Save quiz to history with an ID
     quiz_record = {
         "id": quiz_id_counter,
         "title": quiz_data.get("title", "No Title"),
@@ -58,16 +60,19 @@ def generate(req: QuizRequest):
 
     return quiz_record
 
-# -------------------- History Endpoints --------------------
 @app.get("/history")
 def get_history():
-    """Return list of all previously generated quizzes."""
     return quiz_history
 
 @app.get("/quiz/{quiz_id}")
 def get_quiz(quiz_id: int):
-    """Return quiz details by ID."""
     for q in quiz_history:
         if q["id"] == quiz_id:
             return q
     raise HTTPException(404, "Quiz not found")
+
+# -------------------- Deployment Entry --------------------
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))  # Cloud platforms usually provide PORT
+    uvicorn.run(app, host="0.0.0.0", port=port)
